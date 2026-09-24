@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2715%27 fill=%27%23f4b804%27/%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%277%27 fill=%27%2343c7b4%27/%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%273%27 fill=%27%23000%27/%3E%3C/svg%3E" />
+  <title>After Hours with Mr. Waternoose</title>
+  <meta name="description" content="A real-time, scream-powered tech demo. Mr. Waternoose is sculpted from signed distance fields at load time: no model files." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./src/style.css" />
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <!-- ============ loader ============ -->
+  <section id="loader">
+    <div class="loader-card">
+      <div class="eyebrow">Monsters, Incorporated &middot; Office of the C.E.O.</div>
+      <h1>After Hours<br /><span>with Mr. Waternoose</span></h1>
+      <p class="blurb">
+        A scream-powered real-time demo. There is no model file:
+        Mr. Waternoose is being <em>sculpted from signed distance fields</em> on your CPU right now,
+        across every core you've got.
+      </p>
+      <div class="progress"><div id="bar"></div></div>
+      <ol id="log"></ol>
+      <button id="enter" class="big" disabled>Sculpting&hellip;</button>
+      <div class="fine">Best with headphones &amp; a microphone. Unofficial fan tribute, not affiliated with Disney or Pixar.</div>
+    </div>
+  </section>
+
+  <!-- ============ HUD ============ -->
+  <section id="hud" class="hidden">
+    <header class="brand">
+      <div class="logo">W</div>
+      <div>
+        <div class="t1">Monsters, Inc. &middot; Executive Floor</div>
+        <div class="t2"><span id="clock">11:47 PM</span> &middot; <span id="status">City power critical</span></div>
+      </div>
+    </header>
+
+    <div id="stats" class="panel mono"></div>
+
+    <div id="subtitle" class="hidden">
+      <div class="who">MR. WATERNOOSE</div>
+      <div class="text"></div>
+    </div>
+
+    <div id="banner" class="hidden">QUOTA MET</div>
+
+    <div id="energy" class="panel">
+      <div class="row">
+        <div class="label" id="energyLabel">Scream Energy</div>
+        <div id="pct" class="mono">0%</div>
+      </div>
+      <div class="cells" id="cells"></div>
+      <div class="row controls">
+        <button id="mic" class="pill" title="Use your microphone: scream to charge the canisters">
+          <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
+          <span class="lbl">Enable mic</span>
+          <i id="miclevel"></i>
+        </button>
+        <button id="hold" class="pill hold" title="Hold to scream (or hold SPACE)"><kbd>SPACE</kbd> <span>Hold to scream</span></button>
+      </div>
+    </div>
+
+    <div id="grade" class="panel hidden">
+      <div class="letter">A</div>
+      <div class="info">
+        <div class="head">SCREAM REVIEW <span class="score">0</span></div>
+        <div class="meta"></div>
+        <div class="best"></div>
+      </div>
+    </div>
+
+    <div id="event" class="event hidden"><b></b><small></small><i></i></div>
+
+    <div id="phoneHint" class="hidden"><span class="bell">☎</span> The board is calling! <b>Tap the desk phone</b></div>
+
+    <section id="nightCard" class="panel hidden">
+      <div class="eyebrow">Shift report</div>
+      <h2>Night 1 complete</h2>
+      <div class="stats"></div>
+      <div class="row">
+        <button class="next big">Start night 2</button>
+        <button class="stay pill">Keep celebrating</button>
+      </div>
+    </section>
+
+    <nav id="dock">
+      <button data-act="talk" title="Chat (T)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4V5a1 1 0 0 1 1-1z"/></svg><b>Chat</b><small>T</small></button>
+      <button data-act="walk" title="Stroll (or tap the floor)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 5.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM9.8 8.9 7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3A7.3 7.3 0 0 0 19 13v-2a5 5 0 0 1-4.3-2.4l-1-1.6a2 2 0 0 0-1.7-1c-.3 0-.5.1-.8.1L6 8.3V13h2V9.6z"/></svg><b>Stroll</b><small>tap floor</small></button>
+      <button data-act="dance" title="Crab dance (B)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17.5a3.5 3.5 0 1 1-2-3.2V5l13-2.5v12a3.5 3.5 0 1 1-2-3.2V7.1l-9 1.7z"/></svg><b>Dance</b><small>B</small></button>
+      <button data-act="villain" title="Villain mode (V)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 2l3.5 5.2A7.5 7.5 0 0 1 12 6c1.7 0 3.2.5 4.5 1.2L20 2l.9 8.5A8.5 8.5 0 1 1 3.1 10.5zM8.5 13a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm7 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM8 16c2 2 6 2 8 0z"/></svg><b>Villain</b><small>V</small></button>
+      <button data-act="scare" title="Scare demo (R)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 2h2.2L12 22H9.8zM11 2h2.2l3.2 20h-2.2zM16.5 2h2.2l2.2 20h-2.2z"/></svg><b>Scare</b><small>R</small></button>
+      <button data-act="photo" title="Staff photo (P)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l2 3h3a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3zm3 14.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zm0-2a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg><b>Photo</b><small>P</small></button>
+      <button data-act="awards" title="Awards"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V17h3v3H8v-3h3v-2.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V5h3V3zm0 4H6v1a2 2 0 0 0 1 1.7V7zm10 0v2.7A2 2 0 0 0 18 8V7h-1z"/></svg><b>Awards</b><small>0/12</small></button>
+      <button data-act="director" title="Director's chair (Tab)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v2H3zm14-1.5h2v2h2v2h-2v2h-2zM3 16h5v2H3zm7-1.5h2v2h9v2h-9v2h-2zM3 11h9v2H3zm11-1.5h2v2h5v2h-5v2h-2z"/></svg><b>Camera</b><small>tab</small></button>
+    </nav>
+
+    <aside id="awards" class="panel hidden">
+      <h3>Awards <span class="count"></span></h3>
+      <ul class="list"></ul>
+      <button class="reset pill wide">Reset progress</button>
+    </aside>
+
+    <aside id="director" class="panel hidden">
+      <h3>Director's Chair</h3>
+      <div class="group">
+        <label>Lighting</label>
+        <div class="seg" data-key="preset">
+          <button data-v="night" class="on">Night</button><button data-v="boardroom">Daylight</button><button data-v="villain">Sinister</button><button data-v="studio">Studio</button>
+        </div>
+      </div>
+      <div class="group">
+        <label>Render</label>
+        <div class="seg" data-key="mode">
+          <button data-v="0" class="on">Beauty</button><button data-v="1">Clay</button><button data-v="2">Normals</button><button data-v="3">Baked AO</button><button data-v="wire">Wire</button>
+        </div>
+      </div>
+      <div class="group">
+        <label>Camera</label>
+        <div class="seg" data-key="shot">
+          <button data-v="wide">Wide</button><button data-v="portrait">Portrait</button><button data-v="eyes">Eyes</button><button data-v="hero">Hero</button><button data-v="legs">Legs</button>
+        </div>
+      </div>
+      <div class="group">
+        <label>Post</label>
+        <div class="seg multi" data-key="fx">
+          <button data-v="ao" class="on">GTAO</button><button data-v="bloom" class="on">Bloom</button><button data-v="grain" class="on">Film</button><button data-v="spin">Turntable</button>
+        </div>
+      </div>
+      <button id="photo" class="pill wide">Photo mode <kbd>H</kbd></button>
+    </aside>
+
+    <div id="touchHint">Tap the floor to walk · tap him to poke · hold to scream</div>
+    <div id="hint" class="mono">drag to orbit &middot; scroll to zoom &middot; click the floor to send him walking &middot; WASD to drive &middot; click him to poke (try the eyes)</div>
+  </section>
+
+  <div id="countdown" class="hidden">3</div>
+  <div id="photoModal" class="hidden">
+    <div class="sheet">
+      <img alt="Employee of the Month poster" />
+      <div class="row">
+        <a class="download big" href="#">Download poster</a>
+        <button class="close pill">Close</button>
+      </div>
+    </div>
+  </div>
+  <div id="marker"></div>
+  <div id="flash"></div>
+  <div id="error" class="hidden"></div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

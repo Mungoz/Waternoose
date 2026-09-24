@@ -1,0 +1,21 @@
+import puppeteer from 'puppeteer-core';
+const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: 'new', args: ['--enable-gpu', '--ignore-gpu-blocklist', '--use-angle=d3d11', '--autoplay-policy=no-user-gesture-required'] });
+const page = await browser.newPage();
+await page.setViewport({ width: 1280, height: 720 });
+await page.goto('http://localhost:5173/', { waitUntil: 'load' });
+await page.waitForFunction('!document.querySelector("#enter").disabled', { timeout: 120000 });
+await page.click('#enter');
+await new Promise((r) => setTimeout(r, 6000));
+const probe = () => page.evaluate(() => {
+  const el = document.elementFromPoint(640, 300);
+  return { top: el.tagName + '#' + el.id + '.' + el.className, active: document.activeElement.tagName + '#' + document.activeElement.id, scrollY: window.scrollY, canvasRect: JSON.stringify(document.querySelector('#c').getBoundingClientRect()) };
+});
+console.log('before', await probe());
+await page.keyboard.down('Space');
+await new Promise((r) => setTimeout(r, 400));
+console.log('during', await probe());
+await page.screenshot({ path: '.shots/f3a.png' });
+await new Promise((r) => setTimeout(r, 1500));
+await page.screenshot({ path: '.shots/f3b.png' });
+console.log('later', await page.evaluate(() => window.__dbg().energy));
+await browser.close();
